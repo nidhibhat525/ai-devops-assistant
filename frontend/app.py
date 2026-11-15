@@ -2,6 +2,7 @@
 import streamlit as st
 import requests
 import os
+import bcrypt   
 
 
 # Page configuration
@@ -10,6 +11,40 @@ st.set_page_config(
     page_icon="🤖",
     layout="centered"
 )
+
+# Application authentication
+APP_PASSWORD_HASH = os.getenv("APP_PASSWORD_HASH", "")
+
+if not APP_PASSWORD_HASH:
+    st.error("Application authentication is not configured.")
+    st.stop()
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("AI DevOps Assistant - Login")
+
+    with st.form("login_form"):
+        password = st.text_input("Password", type="password")
+        login = st.form_submit_button("Login")
+
+    if login:
+        if bcrypt.checkpw(
+            password.encode("utf-8"),
+            APP_PASSWORD_HASH.encode("utf-8")
+        ):
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Incorrect password")
+
+    st.stop()
+
+with st.sidebar:
+    if st.button("Logout"):
+        st.session_state.authenticated = False
+        st.rerun()
 
 # Backend API URL
 BACKEND_URL = os.getenv(

@@ -3,7 +3,7 @@ services:
   backend:
     image: ai-devops-backend:1.0
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8001:8000"
     environment:
       OLLAMA_URL: http://ollama:11434/api/chat
       OLLAMA_EMBED_URL: http://ollama:11434/api/embed
@@ -25,6 +25,7 @@ services:
       - "127.0.0.1:8501:8501"
     environment:
       BACKEND_URL: http://backend:8000
+      APP_PASSWORD_HASH: ${APP_PASSWORD_HASH:?$2b$12$YHOoq.CHN5R749uDpaDiRu.5IoffhC1SN5Ha3VP1ZlbHSK9q2bHnq}
     depends_on:
       - backend
 
