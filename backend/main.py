@@ -1,13 +1,32 @@
-
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Header
 from pydantic import BaseModel
 import requests
 from pypdf import PdfReader
 from io import BytesIO
 from backend.rag import store_document, retrieve_context
 import os
+import secrets
+
 
 app = FastAPI(title="AI DevOps Assistant Nidhi Bhat")
+
+# Backend API Authentication
+BACKEND_API_TOKEN = os.getenv("BACKEND_API_TOKEN")
+
+if not BACKEND_API_TOKEN:
+    raise RuntimeError("BACKEND_API_TOKEN is not configured")
+
+
+def verify_api_token(
+    x_api_key: str | None = Header(default=None)
+):
+    if not x_api_key or not secrets.compare_digest(
+        x_api_key, BACKEND_API_TOKEN
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Unauthorized API request"
+        )
 
 OLLAMA_URL = os.getenv(
     "OLLAMA_URL",
@@ -104,7 +123,7 @@ def generate_ai_response(prompt: str) -> str:
         )
 
 
-@app.post("/chat")
+@app.post("/chat", dependencies=[Depends(verify_api_token)])
 def chat(request: ChatRequest):
     try:
         prompt = (
@@ -126,7 +145,7 @@ def chat(request: ChatRequest):
 
 
     
-@app.post("/upload")
+@app.post("/upload", dependencies=[Depends(verify_api_token)])
 async def upload_file(file: UploadFile = File(...)):
 
     filename = (file.filename or "").lower()
@@ -190,7 +209,7 @@ async def upload_file(file: UploadFile = File(...)):
         "chunks_stored": result["chunks_stored"]
         }
 
-@app.post("/ask-document")
+@app.post("/ask-document", dependencies=[Depends(verify_api_token)])
 def ask_document(request: DocumentQuestion):
     try:
         # Retrieve relevant chunks from ChromaDB

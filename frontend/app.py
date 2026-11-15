@@ -52,6 +52,16 @@ BACKEND_URL = os.getenv(
     "http://127.0.0.1:8000"
 )
 
+BACKEND_API_TOKEN = os.getenv("BACKEND_API_TOKEN", "")
+
+if not BACKEND_API_TOKEN:
+    st.error("Backend API authentication is not configured.")
+    st.stop()
+
+API_HEADERS = {
+    "X-API-Key": BACKEND_API_TOKEN
+}   
+
 API_URL = f"{BACKEND_URL}/chat"
 
 # Application title
@@ -98,6 +108,7 @@ else:
                             uploaded_file.getvalue()
                         )
                     },
+                    headers=API_HEADERS,
                     timeout=120
                 )
 
@@ -166,6 +177,7 @@ if user_input:
                 response = requests.post(
                     endpoint,
                     json=payload,
+                    headers=API_HEADERS,
                     timeout=180
                 )
 
